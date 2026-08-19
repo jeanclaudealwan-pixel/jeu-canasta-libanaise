@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Canasta Libanaise - Jeu de cartes multijoueur en ligne">
+    <title>Canasta Libanaise</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🃏</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=12">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="/js/jeu-client.js?v=12" defer></script>
+</head>
+<body>
+
+    <!-- SCREEN 1: LOBBY -->
+    <div id="ecran-lobby">
+        <div class="lobby-conteneur">
+            <div class="lobby-header">
+                <h1>🃏 Canasta<br><span>Libanaise</span></h1>
+                <p class="lobby-sous-titre">Jeu de cartes multijoueur</p>
+            </div>
+            <div class="lobby-actions">
+                <input type="text" id="input-nom-salon" placeholder="Nom du salon..." maxlength="30">
+                <button id="btn-creer-salon" class="btn btn-gold btn-large">Créer un Salon</button>`r`n                <a href="/index-pro.html" class="btn btn-blue" style="margin-top: 10px; display: block; text-align: center; text-decoration: none;">Jouer en vue Paysage (Pro)</a>
+            </div>
+            <div id="liste-salons" class="liste-salons">
+                <p class="texte-vide">Aucun salon disponible</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN 2: WAITING ROOM -->
+    <div id="ecran-salon" style="display:none;">
+        <div class="salon-conteneur">
+            <h2 id="titre-salon">Salon</h2>
+            <div id="grille-sieges" class="grille-sieges">
+                <!-- 4 seat slots rendered by JS -->
+            </div>
+            
+            <!-- Salon Pro Chat -->
+            <div id="chat-salon" class="chat-container">
+                <div id="chat-messages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="input-chat" placeholder="Message..." maxlength="100">
+                    <button id="btn-envoyer-chat" class="btn btn-blue">Envoyer</button>
+                </div>
+            </div>
+
+            <div class="salon-actions">
+                <button id="btn-ajouter-bot" class="btn btn-blue">+ Ajouter Bot</button>
+                <button id="btn-demarrer" class="btn btn-gold btn-large">Démarrer la Partie</button>
+                <button id="btn-quitter-salon" class="btn btn-dark">Quitter</button>
+            </div>
+            <p id="salon-statut" class="salon-statut">En attente de joueurs...</p>
+        </div>
+    </div>
+
+    <!-- SCREEN 3: GAME TABLE -->
+    <div id="ecran-jeu" style="display:none;">
+        
+        <!-- Opponent hands representation -->
+        <div id="zone-adversaires">
+            <div id="adv-gauche" class="adv-main adv-gauche"></div>
+            <div id="adv-haut" class="adv-main adv-haut"></div>
+            <div id="adv-droite" class="adv-main adv-droite"></div>
+        </div>
+
+        <!-- Top bar: scores + turn indicator -->
+        <div id="barre-haut">
+            <div class="top-corner left">
+                <button id="btn-refresh" class="btn-icon">🔄</button>
+            </div>
+            <div id="indicateur-tour" class="indicateur-tour">En attente...</div>
+            <div class="top-corner right">
+                <div style="display:flex; gap: 5px;">
+                    <button id="btn-emoji" class="btn-icon">😀</button>
+                    <button id="btn-settings" class="btn-icon">⚙️</button>
+                </div>
+                <!-- Emoji Panel -->
+                <div id="panneau-emojis" class="panneau-emojis" style="display:none;">
+                    <span class="emoji-option">😂</span>
+                    <span class="emoji-option">😡</span>
+                    <span class="emoji-option">👍</span>
+                    <span class="emoji-option">👎</span>
+                    <span class="emoji-option">👋</span>
+                    <span class="emoji-option">😎</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="table-jeu">
+            <!-- Opponent melds -->
+            <div id="table-adversaire" class="zone-melds">
+                <div id="melds-adversaire" class="melds-conteneur"></div>
+            </div>
+
+            <!-- Center: pioche + terre + actions -->
+            <div id="zone-centre">
+                <div class="centre-piles">
+                    <div id="pioche" class="pile-carte" title="Piocher 2 cartes"></div>
+                    <div id="terre" class="pile-carte" title="Ramasser la terre"></div>
+                </div>
+                
+                <div class="centre-score">
+                    <div class="score-bar">
+                        <div id="progression-adv" class="bar-fill red" style="width:0%"></div>
+                        <span id="score-adverse-text" class="score-text right">+0</span>
+                    </div>
+                    <div class="score-bar">
+                        <div id="progression-eq" class="bar-fill blue" style="width:0%"></div>
+                        <span id="score-equipe-text" class="score-text right">+0</span>
+                    </div>
+                </div>
+
+                <div class="centre-actions">
+                    <button id="btn-sortir" class="btn-rond red" title="Sortir ?">Sortir</button>
+                    <button id="btn-poser" class="btn-rond blue" title="Poser les cartes" disabled>Poser</button>
+                    <!-- Confirmation buttons for staging -->
+                    <button id="btn-valider-pose" class="btn-rond green" title="Confirmer" style="display:none;">✅</button>
+                    <button id="btn-annuler-pose" class="btn-rond red" title="Annuler pose" style="display:none;">❌</button>
+                </div>
+            </div>
+
+            <!-- Our melds -->
+            <div id="table-equipe" class="zone-melds">
+                <div id="melds-equipe" class="melds-conteneur"></div>
+            </div>
+        </div>
+
+        <!-- FIXED BOTTOM: Player hand -->
+        <div id="zone-main">
+            <div id="conteneur-main"></div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modal-overlay" style="display:none;">
+        <div id="modal-scores" class="modal-panel" style="display:none;">
+            <h2>📊 Scores de la Manche</h2>
+            <div id="contenu-scores"></div>
+            <button id="btn-fermer-scores" class="btn btn-green btn-large">Continuer ▶</button>
+        </div>
+        <div id="modal-sortie" class="modal-panel" style="display:none;">
+            <h2>🚪 Demande de Sortie</h2>
+            <p>Votre partenaire demande s'il peut sortir.</p>
+            <div class="modal-btns">
+                <button id="btn-accepter-sortie" class="btn btn-green">✓ Oui, sors !</button>
+                <button id="btn-refuser-sortie" class="btn btn-red">✗ Non, attends</button>
+            </div>
+        </div>
+        <div id="modal-victoire" class="modal-panel" style="display:none;">
+            <h1 id="titre-victoire">🏆 Victoire !</h1>
+            <p id="texte-victoire"></p>
+            <button id="btn-retour-lobby" class="btn btn-gold">Retour au Lobby</button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+</body>
+</html>
