@@ -848,10 +848,9 @@ function rendreMelds(equipeData, conteneurId) {
     const conteneur = document.getElementById(conteneurId);
     if (!conteneur) return;
     
-    // Conserver le titre
-    const titre = conteneur.querySelector('.meld-label');
-    const labelHtml = titre ? titre.outerHTML : `<div class="meld-label">Descente</div>`;
-    conteneur.innerHTML = labelHtml;
+    // Réinitialiser le titre
+    const labelText = conteneurId === 'melds-equipe' ? 'Descente Nous' : 'Descente Eux';
+    conteneur.innerHTML = `<div class="meld-label">${labelText}</div>`;
     
     if (!equipeData) return;
 
