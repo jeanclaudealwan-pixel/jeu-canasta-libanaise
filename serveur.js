@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 
-const { PartieCanasta } = require('./serveur-logique/Jeu'); 
+const { PartieCanasta } = require('./serveur-logique/jeu'); 
 
 const app = express();
 const serveur = http.createServer(app);
