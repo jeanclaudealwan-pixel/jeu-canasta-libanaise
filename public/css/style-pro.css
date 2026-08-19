@@ -146,7 +146,7 @@
   /* ---------- Main play surface ---------- */
   .table-area{
     height:100%;display:flex;flex-direction:row;justify-content:space-between;align-items:stretch;gap:15px;
-    padding:calc(15px + var(--safe-t)) 65px calc(110px + var(--safe-b)) 105px;
+    padding:calc(15px + var(--safe-t)) 70px calc(110px + var(--safe-b)) 65px;
   }
 
   .meld-col{
@@ -177,7 +177,7 @@
   .bonus-chip{font-size:8.5px;font-weight:700;color:var(--red);background:rgba(230,72,63,.15);border:1px solid rgba(230,72,63,.4);padding:2.5px 7px;border-radius:8px;white-space:nowrap;}
   .meld-ghost{width:22px;height:26px;border:1px dashed rgba(255,255,255,.3);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;color:rgba(255,255,255,.35);}
 
-  .center-piles{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;padding:0 10px;position:relative; width:90px;}
+  .center-piles{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:15px;padding:0 10px;position:relative; width:90px; margin-top:-5px;}
 
   .draw-stack{position:relative;width:clamp(50px,9vh,64px);height:clamp(70px,13vh,90px);}
   .draw-layer{
@@ -205,7 +205,7 @@
 
   /* ---------- Player hand ---------- */
   .player-area{
-    position:absolute;left:130px;right:130px;bottom:0;padding-bottom:calc(10px + var(--safe-b));
+    position:absolute;left:95px;right:130px;bottom:0;padding-bottom:calc(10px + var(--safe-b));
     display:flex;justify-content:center;align-items:flex-end;z-index:35;
   }
   .hand{display:flex; width:100%; justify-content:center; align-items:flex-end; height:100px; gap:0px; box-sizing:border-box;}
@@ -216,7 +216,7 @@
     margin-left:-24px;transition:transform .15s ease, box-shadow .15s ease;
   }
   .card:first-child{margin-left:0;}
-  .card:hover,.card:active{transform:translateY(-14px);z-index:100;box-shadow:0 10px 18px rgba(0,0,0,.45);}
+  @media (hover: hover) { .card:hover,.card:active{transform:translateY(-14px);z-index:100;box-shadow:0 10px 18px rgba(0,0,0,.45);} }
   .card.red{color:var(--red);}
   .idx{position:absolute;display:flex;flex-direction:column;align-items:center;line-height:1;font-weight:800;font-size:clamp(9px,1.7vh,11px);}
   .idx.tl{top:4px;left:4px;}

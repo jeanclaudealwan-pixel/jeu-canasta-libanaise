@@ -702,7 +702,7 @@ function applyOverlapForRow(row) {
         return;
     }
 
-    const maxW = window.innerWidth - 260; const containerWidth = Math.min(row.clientWidth || maxW, maxW);
+    const maxW = window.innerWidth - 225; const containerWidth = Math.min(row.clientWidth || maxW, maxW);
     const cardW = 68;
     const groupGap = 10;
     const groupStarts = row.querySelectorAll('.group-start').length;
@@ -858,8 +858,13 @@ function rendreMelds(equipeData, conteneurId) {
     if (equipeData.troisRouges && equipeData.troisRouges.length > 0) {
         const bonus = document.createElement('span');
         bonus.className = 'bonus-chip';
+        bonus.style.display = 'inline-block';
+        bonus.style.marginLeft = '8px';
+        bonus.style.padding = '2px 5px';
+        bonus.style.fontSize = '8px';
         bonus.textContent = `♦ 3 rouge × ${equipeData.troisRouges.length}`;
-        conteneur.appendChild(bonus);
+        const currentTitle = conteneur.querySelector('.meld-label');
+        if (currentTitle) currentTitle.appendChild(bonus);
     }
 
     const valeursTriees = Object.keys(equipeData.table).sort((a,b) => a - b);
