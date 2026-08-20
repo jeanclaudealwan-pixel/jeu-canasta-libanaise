@@ -185,7 +185,7 @@ function quitterLeSalon(socketId) {
                     delete salon.joueurs[socketId];
                     diffuserMessageGlobal(salon, `Le Joueur ${numeroLibere} a définitivement quitté la table.`);
                     envoyerMiseAJourSalon(salon);
-                }, 60000)
+                }, 900000)
             };
         } else {
             salon.placesDisponibles.push(numeroLibere);
@@ -532,6 +532,28 @@ io.on('connection', (socket) => {
                 socket.emit('alerteJeu', 'Le salon n\'existe plus.');
             }
             delete deconnexionsPendantPartie[token];
+        } else if (joueursDansSalons[token]) {
+            const roomId = joueursDansSalons[token];
+            const salon = salons[roomId];
+            if (salon && salon.joueurs[token]) {
+                const numero = salon.joueurs[token];
+                
+                const oldSocket = io.sockets.sockets.get(token);
+                if (oldSocket) oldSocket.disconnect(true);
+                
+                delete salon.joueurs[token];
+                delete joueursDansSalons[token];
+                
+                salon.joueurs[socket.id] = numero;
+                joueursDansSalons[socket.id] = roomId;
+                
+                socket.emit('attributionSiege', numero);
+                diffuserEtatGlobal(salon);
+                socket.emit('alerteJeu', 'Reconnexion réussie !');
+                envoyerMiseAJourSalon(salon);
+            } else {
+                socket.emit('alerteJeu', 'Impossible de se reconnecter.');
+            }
         } else {
             socket.emit('alerteJeu', 'Impossible de se reconnecter.');
         }

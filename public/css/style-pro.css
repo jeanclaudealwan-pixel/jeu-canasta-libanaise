@@ -150,13 +150,13 @@
   }
 
   .meld-col{
-    flex:1; display:grid; grid-template-columns: 1fr 1fr; align-content:start; gap:8px;
+    flex:1; display:grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); align-content:start; gap:4px;
     background:rgba(0,0,0,.14);border:1px dashed var(--line);border-radius:10px;
-    padding:10px; overflow-y:auto;
+    padding:8px; overflow-y:auto;
   }
   .meld-col.nous{border-color:rgba(63,160,224,.32);}
   .meld-col.eux{border-color:rgba(230,72,63,.32);}
-  .meld-label{grid-column: 1 / -1; font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;width:100%;margin-bottom:5px;}
+  .meld-label{grid-column: 1 / -1; font-size:10px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.04em;width:100%;margin-bottom:2px;}
 
   /* canasta group: up to 7 slots, closed groups get a coloured cap */
   .canasta{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.04);border-radius:9px;padding:4px 8px 4px 4px;}
