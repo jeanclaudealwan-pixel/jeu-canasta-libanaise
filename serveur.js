@@ -498,6 +498,22 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('demandeRafraichissement', () => {
+        const salon = getSalonPourSocket(socket.id);
+        if (salon && salon.partie) {
+            let num = salon.joueurs[socket.id];
+            if (num) {
+                socket.emit('miseAJourEtat', salon.partie.getEtatPourJoueur(num));
+            } else if (salon.spectateurs.has(socket.id)) {
+                let etatSpectateur = salon.partie.getEtatPourJoueur(1);
+                etatSpectateur.maMain = [];
+                etatSpectateur.monNumero = null;
+                etatSpectateur.monEquipe = null;
+                socket.emit('miseAJourEtat', etatSpectateur);
+            }
+        }
+    });
+
     socket.on('tentativeReconnexion', (token) => {
         if (deconnexionsPendantPartie[token]) {
             let data = deconnexionsPendantPartie[token];

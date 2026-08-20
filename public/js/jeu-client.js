@@ -634,7 +634,33 @@ function mettreAJourBoutons() {
         if (btnPoser) btnPoser.style.display = 'none';
         if (btnValider) btnValider.style.display = modeErreurPreparation ? 'none' : 'block';
         if (btnAnnuler) btnAnnuler.style.display = 'block';
+
+        let scorePose = 0;
+        groupesPrepares.forEach(g => {
+            g.cartes.forEach(c => scorePose += c.points);
+        });
+        
+        const ind = document.getElementById('indicateur-score-pose');
+        if (ind) {
+            ind.style.display = 'block';
+            let targetScore = 60;
+            if (etatGlobal) {
+                const eq = etatGlobal.equipes[etatGlobal.monEquipe];
+                if (eq && !eq.aOuvert) targetScore = eq.seuilOuverture || 60;
+                else targetScore = 0;
+            }
+            if (targetScore > 0) {
+                ind.textContent = `Score : ${scorePose} / ${targetScore}`;
+                ind.style.color = scorePose >= targetScore ? '#4ade80' : '#f87171';
+            } else {
+                ind.textContent = `Score : ${scorePose}`;
+                ind.style.color = '#fff';
+            }
+        }
     } else {
+        const ind = document.getElementById('indicateur-score-pose');
+        if (ind) ind.style.display = 'none';
+
         if (btnPoser) {
             btnPoser.style.display = 'block';
             if (estMonTour && typeof evaluerSelection === 'function' && evaluerSelection().valide) {
@@ -1181,3 +1207,24 @@ socket.on('resultatSortie', (data) => {
         toast("Votre allié a refusé que vous sortiez.", "error");
     }
 });
+// =============================================================================
+// RECONNEXION ET ANTI-FREEZE MOBILE
+// =============================================================================
+socket.on('connect', () => {
+    const oldId = sessionStorage.getItem('canastaSocketId');
+    if (oldId && oldId !== socket.id) {
+        socket.emit('tentativeReconnexion', oldId);
+    }
+    sessionStorage.setItem('canastaSocketId', socket.id);
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        if (!socket.connected) {
+            socket.connect();
+        } else if (ecranActuel === 'jeu') {
+            socket.emit('demandeRafraichissement');
+        }
+    }
+});
+

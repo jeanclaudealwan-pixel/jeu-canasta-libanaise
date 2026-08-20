@@ -129,6 +129,8 @@ class PartieCanasta {
     distribuerCartes() {
         for (let i = 1; i <= 4; i++) {
             this.joueurs[i].main = [];
+            this.joueurs[i].aPerduDroitOuverture = false;
+            this.joueurs[i].aFaitFauxDepart = false;
         }
         for (let i = 1; i <= 4; i++) {
             for (let c = 0; c < 15; c++) {
@@ -253,21 +255,20 @@ class PartieCanasta {
         const numEquipe = this.equipeDuJoueur(numJoueur);
         const equipe = this.equipes[numEquipe];
 
-        if (!equipe.aOuvert && joueur.aPerduDroitOuverture) {
-            return { ok: false, erreur: "Tu as perdu le droit d'ouvrir pour cette manche. Attends que ton allié ouvre." };
-        }
-
         const carteDessus = this.defausse[this.defausse.length - 1];
-        if (carteDessus.estJoker) {
-            return { ok: false, erreur: 'Impossible de ramasser sur un Joker.' };
+        if (carteDessus.estJoker || carteDessus.valeur === '2') {
+            return { ok: false, erreur: 'Impossible de ramasser sur une carte spéciale (Joker ou 2).' };
         }
         if (carteDessus.est3Noir) {
             return { ok: false, erreur: 'La pile est gelée : un 3 Noir est au-dessus.' };
         }
 
-        const paire = joueur.main.filter(c => !c.estJoker && c.valeur === carteDessus.valeur).slice(0, 2);
-        if (paire.length < 2) {
-            return { ok: false, erreur: `Il faut deux ${carteDessus.valeur} naturels en main pour ramasser la terre.` };
+        const pileGelee = this.defausse.some(c => c.estJoker || c.valeur === '2');
+        const nbRequis = pileGelee ? 3 : 2;
+
+        const cartesRequises = joueur.main.filter(c => !c.estJoker && c.valeur === carteDessus.valeur).slice(0, nbRequis);
+        if (cartesRequises.length < nbRequis) {
+            return { ok: false, erreur: pileGelee ? `La terre est gelée : il faut trois ${carteDessus.valeur} naturels en main pour ramasser.` : `Il faut deux ${carteDessus.valeur} naturels en main pour ramasser la terre.` };
         }
 
         // Le lot disponible pour composer les combinaisons d'ouverture : main + toute la pile
@@ -281,7 +282,7 @@ class PartieCanasta {
             if (!groupesOuverture || groupesOuverture.length === 0) {
                 return { ok: false, erreur: "Ton équipe n'a pas encore ouvert : indique les combinaisons qui prouvent que tu peux ouvrir avec la paire et la pile." };
             }
-            const resultat = this._validerLotDeGroupes(groupesOuverture, poolDisponible, numEquipe, { verifierSeuil: true, exigerPaireEtCarte: { paire, carteDessus } });
+            const resultat = this._validerLotDeGroupes(groupesOuverture, poolDisponible, numEquipe, { verifierSeuil: true, exigerPaireEtCarte: { cartesRequises, carteDessus } });
             if (!resultat.ok) {
                 joueur.aPerduDroitOuverture = true;
                 return { ok: false, erreur: "Ouverture invalide : " + resultat.erreur + " Tu as perdu le droit d'ouvrir pour cette manche." };
@@ -338,7 +339,7 @@ class PartieCanasta {
         const equipe = this.equipes[numEquipe];
 
         if (!equipe.aOuvert && joueur.aPerduDroitOuverture) {
-            return { ok: false, erreur: "Tu as perdu le droit d'ouvrir pour cette manche. Attends que ton allié ouvre." };
+            return { ok: false, erreur: "Suite à un faux départ de ton partenaire, tu as perdu le droit d'ouvrir de ta main. Tu dois obligatoirement ramasser la terre pour ouvrir." };
         }
 
         const poolDisponible = new Map();
@@ -347,8 +348,8 @@ class PartieCanasta {
         const resultat = this._validerLotDeGroupes(groupes, poolDisponible, numEquipe, { verifierSeuil: !equipe.aOuvert });
         if (!resultat.ok) {
             if (!equipe.aOuvert) {
-                joueur.aPerduDroitOuverture = true;
-                return { ok: false, echecOuverture: true, erreur: "Ouverture invalide : " + resultat.erreur + " Tu perds le droit d'ouvrir pour cette manche." };
+                joueur.aFaitFauxDepart = true;
+                return { ok: false, echecOuverture: true, erreur: "Ouverture invalide : " + resultat.erreur + " (Si tu termines ton tour sans ouvrir, ton partenaire sera pénalisé)." };
             }
             return resultat;
         }
@@ -458,27 +459,48 @@ class PartieCanasta {
                 const validation = validerGroupeDeCartes(cartes);
                 if (!validation.valide) return { ok: false, erreur: validation.raison };
                 let meldKey = validation.valeur;
+                let convertToAjout = false;
+
                 if (equipe.table[meldKey]) {
-                    // Check if it's already a canasta
                     if (equipe.table[meldKey].estCanasta) {
                         let counter = 2;
                         while (equipe.table[`${validation.valeur}_${counter}`]) {
                             if (!equipe.table[`${validation.valeur}_${counter}`].estCanasta) {
-                                return { ok: false, erreur: `Ton équipe a déjà une combinaison incomplète de ${validation.valeur} : utilise "compléter" au lieu d'en créer une nouvelle.` };
+                                meldKey = `${validation.valeur}_${counter}`;
+                                convertToAjout = true;
+                                break;
                             }
                             counter++;
                         }
-                        meldKey = `${validation.valeur}_${counter}`;
+                        if (!convertToAjout) {
+                            meldKey = `${validation.valeur}_${counter}`;
+                        }
                     } else {
-                        return { ok: false, erreur: `Ton équipe a déjà une combinaison de ${validation.valeur} : utilise "compléter" au lieu d'en créer une nouvelle.` };
+                        convertToAjout = true;
                     }
                 }
-                groupesValides.push({ type: 'nouvelle', cleUnique: meldKey, valeur: validation.valeur, cartes, validation });
-                pointsNouvellesCombinaisons += validation.pointsFaciaux;
+
+                if (convertToAjout) {
+                    const combinaisonExistante = equipe.table[meldKey];
+                    if (validation.valeur === '2' && combinaisonExistante.verrouilleePure) {
+                        if (cartes.some(c => c.estJoker)) {
+                            return { ok: false, erreur: "Impossible d'ajouter un Joker à une combinaison de 2 pure." };
+                        }
+                    }
+                    const cartesCombinees = combinaisonExistante.cartes.concat(cartes);
+                    const comboValidation = validerGroupeDeCartes(cartesCombinees);
+                    if (!comboValidation.valide) return { ok: false, erreur: comboValidation.raison };
+
+                    groupesValides.push({ type: 'ajout', valeur: meldKey, cartesAjoutees: cartes, validation: comboValidation });
+                } else {
+                    groupesValides.push({ type: 'nouvelle', cleUnique: meldKey, valeur: validation.valeur, cartes, validation });
+                    pointsNouvellesCombinaisons += validation.pointsFaciaux;
+                }
             }
 
             if (options.exigerPaireEtCarte) {
                 const carteDessus = options.exigerPaireEtCarte.carteDessus;
+                const nbRequis = options.exigerPaireEtCarte.cartesRequises.length;
                 const cartesDuGroupe = groupe.cartesId || [];
                 
                 // Si la combinaison examinée contient bien la carte de la défausse
@@ -493,8 +515,8 @@ class PartieCanasta {
                             }
                         }
                     }
-                    // Si on a au moins 2 cartes naturelles (peu importe lesquelles !), c'est validé
-                    if (nbNaturelles >= 2) contientPaireEtCarte = true;
+                    // Si on a au moins le nombre requis de cartes naturelles (peu importe lesquelles !), c'est validé
+                    if (nbNaturelles >= nbRequis) contientPaireEtCarte = true;
                 }
             }
         }
@@ -558,9 +580,6 @@ class PartieCanasta {
         if (idx === -1) return { ok: false, erreur: 'Cette carte n\'est pas dans ta main.' };
 
         const carte = joueur.main[idx];
-        if (carte.estJoker || carte.valeur === '2') {
-            return { ok: false, erreur: 'Impossible de jeter un Joker ou un 2 : joue-le dans une combinaison.' };
-        }
 
         const numEquipe = this.equipeDuJoueur(numJoueur);
         const feraSortirLaMain = joueur.main.length === 1;
@@ -572,6 +591,12 @@ class PartieCanasta {
                 return { ok: false, erreur: "Tu ne peux pas terminer la manche sans que ton équipe ait au moins une Canasta Pure ET une Canasta Impure." };
             }
         }
+
+        if (joueur.aFaitFauxDepart && !this.equipes[numEquipe].aOuvert) {
+            const partenaireNum = this.equipes[numEquipe].membres.find(m => m !== numJoueur);
+            this.joueurs[partenaireNum].aPerduDroitOuverture = true;
+        }
+        joueur.aFaitFauxDepart = false;
 
         joueur.main.splice(idx, 1);
         this.defausse.push(carte);
@@ -599,9 +624,6 @@ class PartieCanasta {
             let points = 0;
             const detail = { troisRouges: 0, canastas: [], valeurCombinaisons: 0, valeurMainRestante: 0 };
 
-            detail.troisRouges = equipe.troisRouges.length * 100;
-            points += detail.troisRouges;
-
             for (const combinaison of Object.values(equipe.table)) {
                 const cartes = combinaison.cartes;
                 const estCanasta = cartes.length >= 7;
@@ -618,6 +640,10 @@ class PartieCanasta {
                     points += pts;
                 }
             }
+
+            const penaliteTroisRouges = !equipe.aOuvert || detail.canastas.length === 0;
+            detail.troisRouges = equipe.troisRouges.length * (penaliteTroisRouges ? -100 : 100);
+            points += detail.troisRouges;
             
             let pointsEnArriere = false;
             if (numJoueurSorti) {
@@ -758,8 +784,8 @@ function validerGroupeDeCartes(cartes) {
 
 function calculerSeuilOuverture(scoreEquipe) {
     if (scoreEquipe < 3000) return 60;
-    if (scoreEquipe < 6000) return 90;
-    if (scoreEquipe < 9000) return 120;
+    if (scoreEquipe < 5000) return 90;
+    if (scoreEquipe < 7000) return 120;
     return 160;
 }
 
