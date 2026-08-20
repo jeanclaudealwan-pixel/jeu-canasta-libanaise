@@ -681,8 +681,8 @@ class PartieCanasta {
             this.enJeu = false;
             this.vainqueur = recap.equipes[1].scoreTotal >= recap.equipes[2].scoreTotal ? 1 : 2;
         } else {
-            const premierJoueurSuivant = numJoueurSorti ? (numJoueurSorti % 4) + 1 : (this.tourActuel % 4) + 1;
-            this.demarrerNouvelleManche(premierJoueurSuivant);
+            this.enJeu = false;
+            this.prochainPremierJoueur = numJoueurSorti ? (numJoueurSorti % 4) + 1 : (this.tourActuel % 4) + 1;
         }
 
         return recap;
@@ -728,6 +728,7 @@ class PartieCanasta {
             tailleDefausse: this.defausse.length,
             defausseVisible: this.defausse.map(serialiserCarte),
             carteDessusDefausse: this.defausse.length > 0 ? serialiserCarte(this.defausse[this.defausse.length - 1]) : null,
+            terreGelee: this.defausse.some(c => c.estJoker || c.valeur === '2'),
             taillePioche: this.pioche.length,
             equipes: equipesPubliques,
             dernierRecapManche: this.dernierRecapManche

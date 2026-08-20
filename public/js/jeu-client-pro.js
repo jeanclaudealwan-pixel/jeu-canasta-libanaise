@@ -1161,6 +1161,13 @@ socket.on('miseAJourEtat', (etat) => {
     // Check for recap
     if (etat.dernierRecapManche && !etat.enJeu && !etat.partieTerminee) {
         afficherRecap(etat.dernierRecapManche);
+    } else if (etat.enJeu) {
+        document.getElementById('modal-scores').style.display = 'none';
+        // Only hide overlay if no other modal is showing
+        if (document.getElementById('modal-sortie').style.display === 'none' && 
+            document.getElementById('modal-victoire').style.display === 'none') {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
     }
     
     if (etat.partieTerminee) {

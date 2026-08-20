@@ -34,11 +34,11 @@ class BotJoueur {
             if (!this.partie || !this.partie.enJeu) return;
             const resPiocher = this.partie.actionPiocher(this.numero);
             if (resPiocher.ok) {
-                diffuserEtatGlobal(this.salon);
                 if (resPiocher.piocheEpuisee) {
-                    diffuserAlerte(this.salon, "La pioche est épuisée ! Fin de la manche.");
+                    gererFinManche(this.salon, { recapManche: resPiocher.recapManche });
                     return;
                 }
+                diffuserEtatGlobal(this.salon);
             }
             
             const main = this.partie.joueurs[this.numero].main;
@@ -70,12 +70,12 @@ class BotJoueur {
             const resJeter = this.partie.actionJeter(this.numero, jeterId);
             if (resJeter.ok) {
                 if (resJeter.mancheTerminee) {
-                    diffuserAlerte(this.salon, `Manche terminée ! Raison : ${resJeter.recapManche.raison}`);
+                    gererFinManche(this.salon, resJeter);
                 } else {
                     diffuserChangementTour(this.salon, resJeter.prochainTour);
                     verifierTourBot(this.salon, resJeter.prochainTour);
+                    diffuserEtatGlobal(this.salon);
                 }
-                diffuserEtatGlobal(this.salon);
             }
         }, 1500);
     }
@@ -93,6 +93,23 @@ function diffuserAlerte(salon, message) {
     }
     for (let sId of salon.spectateurs) {
         io.to(sId).emit('alerteJeu', message);
+    }
+}
+
+function gererFinManche(salon, resultat) {
+    diffuserAlerte(salon, `Manche terminée ! Raison : ${resultat.recapManche.raison}`);
+    diffuserEtatGlobal(salon); // Envoie l'état avec dernierRecapManche et enJeu=false
+    
+    if (!salon.partie.partieTerminee) {
+        // Redémarrer automatiquement dans 10 secondes
+        setTimeout(() => {
+            if (salon && salon.partie && !salon.partie.enJeu) {
+                salon.partie.demarrerNouvelleManche(salon.partie.prochainPremierJoueur);
+                diffuserChangementTour(salon, salon.partie.tourActuel);
+                verifierTourBot(salon, salon.partie.tourActuel);
+                diffuserEtatGlobal(salon);
+            }
+        }, 12000); // 12 seconds de recap
     }
 }
 
@@ -363,12 +380,12 @@ io.on('connection', (socket) => {
         
         if (resultat.ok) {
             if (resultat.mancheTerminee) {
-                diffuserAlerte(salon, `Manche terminée ! Raison : ${resultat.recapManche.raison}`);
+                gererFinManche(salon, resultat);
             } else {
                 diffuserChangementTour(salon, resultat.prochainTour);
                 verifierTourBot(salon, resultat.prochainTour);
+                diffuserEtatGlobal(salon);
             }
-            diffuserEtatGlobal(salon);
         } else {
             socket.emit('alerteJeu', resultat.erreur);
             socket.emit('miseAJourEtat', salon.partie.getEtatPourJoueur(numeroJoueur));
@@ -384,9 +401,10 @@ io.on('connection', (socket) => {
         let resultat = salon.partie.actionPiocher(numeroJoueur);
 
         if (resultat.ok) {
-            diffuserEtatGlobal(salon);
             if (resultat.piocheEpuisee) {
-                diffuserAlerte(salon, "La pioche est épuisée ! Fin de la manche.");
+                gererFinManche(salon, { recapManche: resultat.recapManche });
+            } else {
+                diffuserEtatGlobal(salon);
             }
         } else {
             socket.emit('alerteJeu', resultat.erreur);
@@ -420,10 +438,11 @@ io.on('connection', (socket) => {
         if (resultat.ok) {
             socket.emit('alerteJeu', "Combinaisons validées !");
             if (resultat.mancheTerminee) {
-                diffuserAlerte(salon, `Manche terminée ! Raison : ${resultat.recapManche.raison}`);
                 envoyerMiseAJourSalon(salon);
+                gererFinManche(salon, resultat);
+            } else {
+                diffuserEtatGlobal(salon);
             }
-            diffuserEtatGlobal(salon);
         } else {
             socket.emit('alerteJeu', resultat.erreur);
         }

@@ -83,17 +83,7 @@
   <div class="table-wrap">
     <button class="menu-btn"><svg class="icon"><use href="#i-menu"/></svg></button>
     <div id="indicateur-tour" class="turn-indicator"><span class="turn-dot"></span>Tour : Vous</div>
-    <!-- Compact Scoreboard -->
-    <div id="compact-scoreboard" style="position:absolute; left:calc(10px + var(--safe-l)); bottom:calc(115px + var(--safe-b)); z-index:40; display:flex; flex-direction:column; gap:5px; background:rgba(0,0,0,0.4); padding:6px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 12px rgba(0,0,0,0.4); backdrop-filter:blur(4px);">
-       <div id="score-equipe-container" style="display:flex; justify-content:space-between; align-items:center; gap:15px;">
-         <span style="font-size:10px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px;">NOUS</span>
-         <span id="score-equipe-text" style="color:var(--blue); font-size:16px; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,0.5);">0</span>
-       </div>
-       <div id="score-adverse-container" style="display:flex; justify-content:space-between; align-items:center; gap:15px;">
-         <span style="font-size:10px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px;">EUX</span>
-         <span id="score-adverse-text" style="color:var(--red); font-size:16px; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,0.5);">0</span>
-       </div>
-    </div>
+
     <!-- Opponents -->
     <div id="adv-haut" class="opponent opponent-top">
       <div class="hand-fan">
@@ -164,6 +154,18 @@
         <div id="terre" class="pile discard">
           <span>8</span><span>♥</span>
           <span class="frozen-badge"><svg class="icon"><use href="#i-lock"/></svg>Gelée</span>
+        </div>
+        
+        <!-- Compact Scoreboard -->
+        <div id="compact-scoreboard" style="display:flex; flex-direction:column; gap:5px; background:rgba(0,0,0,0.4); padding:6px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 4px 12px rgba(0,0,0,0.4); backdrop-filter:blur(4px); margin-top: auto; margin-bottom: 10px; width: max-content; align-self: center;">
+           <div id="score-equipe-container" style="display:flex; justify-content:space-between; align-items:center; gap:15px;">
+             <span style="font-size:10px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px;">NOUS</span>
+             <span id="score-equipe-text" style="color:var(--blue); font-size:16px; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,0.5);">0</span>
+           </div>
+           <div id="score-adverse-container" style="display:flex; justify-content:space-between; align-items:center; gap:15px;">
+             <span style="font-size:10px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px;">EUX</span>
+             <span id="score-adverse-text" style="color:var(--red); font-size:16px; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,0.5);">0</span>
+           </div>
         </div>
       </div>
       <!-- Eux (Droite) -->

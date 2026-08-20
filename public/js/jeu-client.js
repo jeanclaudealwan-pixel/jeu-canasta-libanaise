@@ -1083,6 +1083,21 @@ function rendreDefausse(carteDessus, taille) {
         badge.textContent = taille;
         terre.appendChild(badge);
     }
+    
+    if (etatGlobal && etatGlobal.terreGelee) {
+        const gel = document.createElement('div');
+        gel.innerHTML = `❄️`;
+        gel.style.position = 'absolute';
+        gel.style.top = '-5px';
+        gel.style.right = '-5px';
+        gel.style.background = '#1c4a82';
+        gel.style.border = '1px solid white';
+        gel.style.borderRadius = '50%';
+        gel.style.padding = '2px';
+        gel.style.fontSize = '12px';
+        gel.style.zIndex = '10';
+        terre.appendChild(gel);
+    }
 }
 
 // =============================================================================
@@ -1120,6 +1135,12 @@ socket.on('miseAJourEtat', (etat) => {
     // Check for recap
     if (etat.dernierRecapManche && !etat.enJeu && !etat.partieTerminee) {
         afficherRecap(etat.dernierRecapManche);
+    } else if (etat.enJeu) {
+        document.getElementById('modal-scores').style.display = 'none';
+        if (document.getElementById('modal-sortie').style.display === 'none' && 
+            document.getElementById('modal-victoire').style.display === 'none') {
+            document.getElementById('modal-overlay').style.display = 'none';
+        }
     }
     
     if (etat.partieTerminee) {
